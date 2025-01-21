@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.coverage
+/htmlcov
+dist/
+build/
+.env
+/venv*
+/grafana/
+/prometheus/
+/.vscode
+*.egg-info
+.pypirc

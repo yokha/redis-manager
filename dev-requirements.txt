@@ -1,0 +1,16 @@
+# Testing
+pytest
+pytest-asyncio
+pytest-mock
+pytest-cov
+pytest-xdist
+pytest-sugar
+
+# Linting and Formatting
+pylint
+black
+mypy
+
+# Packaging
+setuptools
+wheel

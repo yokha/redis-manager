@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**/README.md'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ci-tests
+      cancel-in-progress: true
+    strategy:
+      matrix:
+        python-version:
+          - "3.12"
+          - "3.11"
+          - "3.10"
+          - "3.9"
+          - "3.8"
+      fail-fast: false
+      max-parallel: 1  # Ensures serial execution
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Validate Docker Installation
+        run: |
+          docker --version
+          docker-compose --version
+
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r dev-requirements.txt
+
+      - name: Check code formatting
+        run: |
+          source venv/bin/activate
+          make format-check
+
+      - name: Run linting
+        run: |
+          source venv/bin/activate
+          make lint
+
+      - name: Run unit tests
+        run: |
+          source venv/bin/activate
+          make test
+
+      - name: Run integration tests
+        run: |
+          source venv/bin/activate
+          make integration
+
+      - name: Run coverage
+        run: |
+          source venv/bin/activate
+          make cov
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report-${{ matrix.python-version }}
+          path: htmlcov/

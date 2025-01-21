@@ -1,0 +1,86 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "redis-manager"
+version = "0.1.0"
+description = "A Redis connection pool manager with asyncio support."
+authors = [{name = "yokha", email = "khaya.youssef@gmail.com"}]
+license = {text = "MIT"}
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.8"
+keywords = ["redis", "connection pool", "asyncio", "manager", "python"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = [
+    "redis>=5.0",
+    "prometheus-client",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-mock",
+    "pytest-cov",
+    "pytest-xdist",
+    "pytest-sugar",
+    "pylint",
+    "black",
+    "mypy",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+
+[tool.pylint]
+max-line-length = 88
+ignore = ["__pycache__", "*.pyc", "*.pyo", "env", "venv"]
+disable = [
+    "C0103", # Variable name doesn't conform to snake_case
+    "C0114", # Missing module docstring
+    "C0116", # Missing function or method docstring
+    "C0301", # Line too long (related to line length)
+    "R0902", # Too many instance attributes
+    "R0913", # Too many arguments
+    "R0917", # Too many positional arguments
+    "W1203", # Use lazy % formatting in logging functions
+    "W0108", # Lambda may not be necessary
+    "W0718", # Catching too general exception Exception
+    "W0621", # redefined-outer-name
+    "W0212", # protected-access
+    "W0613", #: Unused argument
+]
+
+[tool.pylint.messages_control]
+disable = ["no-member"]
+
+
+[tool.mypy]
+strict = true
+files = "src/redis_manager"
+
+[tool.pytest.ini_options]
+addopts = "--dist=loadscope --asyncio-mode=auto --strict-markers --log-level=INFO -n auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "integration: mark a test as an integration test",
+]
+log_format = "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+testpaths = [
+    "tests",
+]

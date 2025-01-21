@@ -1,0 +1,30 @@
+# Dockerfile.tests
+FROM python:3.12-slim
+
+# Set working directory
+WORKDIR /app
+
+
+
+# Install Redis CLI
+RUN apt-get update && apt-get install -y redis-tools && apt-get clean && \
+    redis-cli --version
+
+# Copy requirements
+COPY requirements.txt dev-requirements.txt /app/
+
+# Update pip to latest
+RUN pip install --upgrade pip
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt -r dev-requirements.txt
+
+# Set Python path
+ENV PYTHONPATH=/app/src
+
+# Copy source code and tests
+COPY ./src /app/src
+COPY ./tests /app/tests
+
+# Default command
+CMD ["pytest", "-v", "tests/integration"]

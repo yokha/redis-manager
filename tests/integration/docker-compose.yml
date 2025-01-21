@@ -1,0 +1,107 @@
+x-redis-cluster-base: &redis-cluster-base
+  image: docker.io/bitnami/redis-cluster:7.2
+  environment:
+    - ALLOW_EMPTY_PASSWORD=yes
+    - REDIS_CLUSTER_PREFERRED_ENDPOINT_TYPE=ip
+    - REDIS_CLUSTER_REPLICAS=0           # Number of replicas per master
+  networks:
+    - redis-cluster-network
+  healthcheck:
+    test: ["CMD", "redis-cli", "-p", "6379", "PING"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", ""]
+    networks:
+      - redis-cluster-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "PING"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-cluster-0:
+    <<: *redis-cluster-base
+    container_name: redis-cluster-0
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_NODES=redis-cluster-0:6379 redis-cluster-1:6379 redis-cluster-2:6379
+      - REDIS_PORT_NUMBER=6379
+      - REDIS_CLUSTER_ANNOUNCE_IP=redis-cluster-0
+    ports:
+      - 7000:6379
+    volumes:
+      - redis-cluster-0-data:/bitnami/redis
+
+  redis-cluster-1:
+    <<: *redis-cluster-base
+    container_name: redis-cluster-1
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_NODES=redis-cluster-0:6379 redis-cluster-1:6379 redis-cluster-2:6379
+      - REDIS_PORT_NUMBER=6379
+      - REDIS_CLUSTER_ANNOUNCE_IP=redis-cluster-1
+    ports:
+      - 7001:6379
+    volumes:
+      - redis-cluster-1-data:/bitnami/redis
+
+  redis-cluster-2:
+    <<: *redis-cluster-base
+    container_name: redis-cluster-2
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_NODES=redis-cluster-0:6379 redis-cluster-1:6379 redis-cluster-2:6379
+      - REDIS_PORT_NUMBER=6379
+      - REDIS_CLUSTER_ANNOUNCE_IP=redis-cluster-2
+    ports:
+      - 7002:6379
+    volumes:
+      - redis-cluster-2-data:/bitnami/redis
+
+  # Test Runner Service
+  test-runner:
+    image: python:3.12-slim  # Use a base Python image
+    container_name: test-runner
+    build:
+      context: ../../
+      dockerfile: Dockerfile.tests  # Custom Dockerfile for dependencies
+    depends_on:
+      - redis
+      - redis-cluster-0
+      - redis-cluster-1
+      - redis-cluster-2
+    networks:
+      - redis-cluster-network
+    volumes:
+      - ../../src:/app/src
+      - ../../tests:/app/tests
+    environment:
+      - PYTHONPATH=/app/src
+    command: >
+      sh -c "
+      until redis-cli -h redis -p 6379 ping | grep PONG && \
+            redis-cli -h redis-cluster-0 -p 6379 ping | grep PONG && \
+            redis-cli -h redis-cluster-1 -p 6379 ping | grep PONG && \
+            redis-cli -h redis-cluster-2 -p 6379 ping | grep PONG; do
+        echo 'Waiting for Redis cluster to be ready...';
+        sleep 2;
+      done &&
+      pytest -v -n auto --dist=loadscope tests/integration"
+
+
+networks:
+  redis-cluster-network:
+    driver: bridge
+
+volumes:
+  redis-cluster-0-data:
+  redis-cluster-1-data:
+  redis-cluster-2-data:
