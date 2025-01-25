@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "redis-manager"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Redis connection pool manager with asyncio support."
 authors = [{name = "yokha", email = "khaya.youssef@gmail.com"}]
 license = {text = "MIT"}

@@ -230,7 +230,7 @@ verify-test-release:
 # Release to PyPI. it requires env vars
 # export TWINE_USERNAME="__token__"
 # export TWINE_PASSWORD="your-pypi-api-token"
-Release-pypi: package
+release-pypi: package
 	@echo "Uploading to PyPI..."
 	@if [ -z "$$TWINE_USERNAME" ] || [ -z "$$TWINE_PASSWORD" ]; then \
 		echo "Error: TWINE_USERNAME or TWINE_PASSWORD is not set"; \
